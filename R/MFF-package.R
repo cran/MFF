@@ -1,0 +1,43 @@
+#' MFF: Meta-Fuzzy Functions
+#'
+#' @description
+#' Implements Meta Fuzzy Functions (MFFs) for regression by aggregating predictions
+#' from multiple base models using fuzzy clustering–derived
+#' weights. The package allows users to fit MFF models on top of diverse regression learners,
+#' including linear and penalized regression models, random forests, and gradient boosting methods.
+#' Membership weights are obtained via Fuzzy C-Means, Possibilistic FCM,
+#' or k-means, enabling both fuzzy and crisp ensemble structures. Clustering-related hyperparameters—such as
+#' the number of meta fuzzy functions, fuzziness exponent, and possibilistic regularization parameter—can be
+#' systematically tuned using validation data. A dedicated predict method is provided for producing test-set
+#' predictions from fitted or tuned MFF objects, along with evaluation tools for performance assessment.
+#'
+#' @section Available Functions:
+#' \describe{
+#'   \item{\code{mff()}}{Fits Meta Fuzzy Regression Functions models by estimating fuzzy membership weights from base-model prediction matrices and constructing cluster-wise meta regression functions.}
+#'   \item{\code{tune.mff()}}{Performs hyperparameter optimization for MFF models via grid search over clustering-related parameters, selecting the configuration that minimizes a chosen validation error metric.}
+#'   \item{\code{predict.mff()}}{S3 prediction method for fitted or tuned MFF objects, generating test-set predictions using membership-weighted aggregation of base-model outputs.}
+#'   \item{\code{evaluate()}}{Convenience function for training multiple regression models and producing validation and test prediction matrices suitable for MFF modeling.}
+#'   \item{\code{model.train()}}{Computes regression performance metrics (e.g., MAE, RMSE, MAPE, SMAPE, MSE, MedAE) for comparing meta fuzzy functions and base-model predictions.}
+#' }
+#'
+#' @details
+#' Provides tools for fitting and evaluating Meta Fuzzy Regression Functions by aggregating
+#' heterogeneous base regression models through fuzzy membership functions learned in the prediction
+#' space, with support for hyperparameter tuning and standard regression performance measures.
+#'
+#' @references
+#' \strong{Data Source for examples:}
+#'
+#'  Venables, W. N. & Ripley, B. D. (2002) Modern Applied Statistics with S.
+#'  Fourth Edition. Springer, New York. ISBN 0-387-95457-0. (Provides the \code{Boston} dataset via the \code{MASS} package).
+#'
+#' @author
+#' \strong{Maintainer}: Nihat Tak
+#' \strong{Authors}: Nihat Tak, Sadık Çoban
+#'
+#' @keywords NULL
+"_PACKAGE"
+
+## usethis namespace: start
+## usethis namespace: end
+NULL
