@@ -8,11 +8,12 @@ mff(
   x,
   y,
   c,
-  m = NULL,
-  eta = NULL,
-  iter.max = 1000,
-  nstart = 100,
-  method = c("fcm", "pfcm", "kmeans")
+  m = 2,
+  eta = 2,
+  iter.max = NULL,
+  nstart = 1,
+  stand = FALSE,
+  method = c("fcm", "pfcm", "kmeans", "gk")
 )
 }
 \arguments{
@@ -35,15 +36,17 @@ algorithm.}
 \item{nstart}{n integer controlling the number of random initializations used when method =
 "kmeans" to improve robustness of the final clustering solution}
 
+\item{stand}{Logical; if \code{TRUE}, the transposed data is standardized
+(mean=0, sd=1) before clustering to ensure scale-invariance between models.}
+
 \item{method}{A character string selecting the membership-generation method. Available options
-are "fcm", "pfcm", and "kmeans".}
+are "fcm", "gk", "pfcm", and "kmeans".}
 }
 \value{
 A list containing:
 \itemize{
 \item \code{method}: The clustering method used for membership estimation.
 \item \code{weights}: A column-standardized membership (weight) matrix.
-\item \code{cluster_preds}: A numeric matrix of meta fuzzy functions' predictions.
 \item \code{cluster_scores}: A data frame of evaluation metrics computed for each cluster(function).
 }
 }
@@ -61,8 +64,8 @@ observations in the meta-clustering space. The resulting membership matrix is th
 form meta fuzzy function predictions through weighted aggregation of base-model outputs.
 
 The function supports four membership-generation methods: classical Fuzzy C-Means
-(FCM),  possibilistic FCM (PFCM) producing softmax-like weights, and deterministic k-means converted to pseudo-
-fuzzy memberships. After membership estimation, meta fuzzy function predictions are
+(FCM), Gustafson-Kessel (GK) clustering for non-spherical structures, Possibilistic FCM (PFCM) producing softmax-like weights, and deterministic k-means for a situation with no uncertainty.
+After membership estimation, meta fuzzy function predictions are
 computed via linear combinations of base-model predictions and the learned membership-
 based weights, and the predictive performance of each meta fuzzy function is assessed using
 \emph{evaluate}. Membership weights are standardized column-wise to ensure that the total
@@ -82,7 +85,6 @@ interpretation and comparison across meta fuzzy functions.
  iter.max=100,nstart = 100,method = "kmeans")
  mff_model
 
-
 }
 \references{
 Tak, N. (2018). Meta fuzzy functions: Application of recurrent type-1 fuzzy functions.
@@ -94,9 +96,17 @@ Bezdek, J. C., Ehrlich, R., & Full, W. (1984). FCM: The fuzzy c-means clustering
 Cebeci, Z. (2019). Comparison of internal validity indices for fuzzy clustering.
 \emph{Journal of Agricultural Informatics}, 10(2), 1-14. \doi{10.17700/jai.2019.10.2.537}
 
+Gustafson, D. E., & Kessel, W. C. (1978). Fuzzy clustering with a fuzzy covariance matrix.
+In \emph{1978 IEEE Conference on Decision and Control including the 17th Symposium on Adaptive Processes},
+761-766. \doi{10.1109/CDC.1978.268028}
+
 Meyer, D., Dimitriadou, E., Hornik, K., Weingessel, A., & Leisch, F. (2024).
 \emph{e1071: Misc Functions of the Department of Statistics, Probability Theory Group (Formerly: E1071), TU Wien}.
 R package version 1.7-16. \url{https://CRAN.R-project.org/package=e1071}
+
+Gustafson, D. E., & Kessel, W. C. (1978). Fuzzy clustering with a fuzzy covariance matrix.
+In \emph{1978 IEEE Conference on Decision and Control including the 17th Symposium on Adaptive Processes},
+761-766. \doi{10.1109/CDC.1978.268028}
 
 Pal, N. R., Pal, K., Keller, J. M., & Bezdek, J. C. (2005). A possibilistic fuzzy c-means clustering algorithm.
 \emph{IEEE Transactions on Fuzzy Systems}, 13(4), 517-530. \doi{10.1109/TFUZZ.2004.840099}

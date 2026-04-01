@@ -5,7 +5,7 @@
 #' from multiple base models using fuzzy clustering–derived
 #' weights. The package allows users to fit MFF models on top of diverse regression learners,
 #' including linear and penalized regression models, random forests, and gradient boosting methods.
-#' Membership weights are obtained via Fuzzy C-Means, Possibilistic FCM,
+#' Membership weights are obtained via Fuzzy C-Means, Gustafson–Kessel clustering, Possibilistic FCM,
 #' or k-means, enabling both fuzzy and crisp ensemble structures. Clustering-related hyperparameters—such as
 #' the number of meta fuzzy functions, fuzziness exponent, and possibilistic regularization parameter—can be
 #' systematically tuned using validation data. A dedicated predict method is provided for producing test-set
@@ -16,9 +16,14 @@
 #'   \item{\code{mff()}}{Fits Meta Fuzzy Regression Functions models by estimating fuzzy membership weights from base-model prediction matrices and constructing cluster-wise meta regression functions.}
 #'   \item{\code{tune.mff()}}{Performs hyperparameter optimization for MFF models via grid search over clustering-related parameters, selecting the configuration that minimizes a chosen validation error metric.}
 #'   \item{\code{predict.mff()}}{S3 prediction method for fitted or tuned MFF objects, generating test-set predictions using membership-weighted aggregation of base-model outputs.}
-#'   \item{\code{evaluate()}}{Convenience function for training multiple regression models and producing validation and test prediction matrices suitable for MFF modeling.}
-#'   \item{\code{model.train()}}{Computes regression performance metrics (e.g., MAE, RMSE, MAPE, SMAPE, MSE, MedAE) for comparing meta fuzzy functions and base-model predictions.}
+#'   \item{\code{evaluate()}}{Computes regression performance metrics (e.g., MAE, RMSE, MAPE, SMAPE, MSE, MedAE) for comparing meta fuzzy functions and base-model predictions.}
+#'   \item{\code{model.train()}}{Convenience function for training multiple regression models and producing validation and test prediction matrices suitable for MFF modeling.}
+#'   \item{\code{boot.train()}}{Convenience function for training bagging for multiple linear regression models and producing validation and test prediction matrices suitable for MFF modeling.}
 #' }
+#'
+#' @section Acknowledgements:
+#' This study was supported by Scientific and Technological Research Council of Türkiye (TÜBİTAK)
+#' under Grant Number 125F138. The authors thank TÜBİTAK for its support.
 #'
 #' @details
 #' Provides tools for fitting and evaluating Meta Fuzzy Regression Functions by aggregating
@@ -26,14 +31,18 @@
 #' space, with support for hyperparameter tuning and standard regression performance measures.
 #'
 #' @references
-#' \strong{Data Source for examples:}
+#' Tak, N. (2018). Meta fuzzy functions: Application of recurrent type-1 fuzzy functions.
+#' \emph{Applied Soft Computing}, 73, 1-13. <doi:10.1016/j.asoc.2018.08.009>
 #'
-#'  Venables, W. N. & Ripley, B. D. (2002) Modern Applied Statistics with S.
-#'  Fourth Edition. Springer, New York. ISBN 0-387-95457-0. (Provides the \code{Boston} dataset via the \code{MASS} package).
+#' Tak, N. (2021). Forecast combination with meta possibilistic fuzzy functions.
+#' \emph{Information Sciences}, 560, 168–182. <doi:10.1016/j.ins.2021.01.024>
 #'
-#' @author
-#' \strong{Maintainer}: Nihat Tak
-#' \strong{Authors}: Nihat Tak, Sadık Çoban
+#' Tak, N., & Uçan, A. (2026). Meta fuzzy feature-selection-based regression functions.
+#' \emph{Applied Soft Computing}, 190, 114592. <doi:10.1016/j.asoc.2026.114592>
+#'
+#' @author \strong{Maintainer}: Nihat Tak
+#' @author \strong{Authors}: Nihat Tak, Sadık Çoban
+#'
 #'
 #' @keywords NULL
 "_PACKAGE"
