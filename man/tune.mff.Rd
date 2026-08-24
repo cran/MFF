@@ -65,15 +65,15 @@ and uses all available cores minus one (\code{parallel::detectCores() - 1}).}
 }
 \value{
 \itemize{
-\item \code{algorithm}: The selected membership-generation method.
-\item \code{eval.method}: The evaluation metric used in model selection.
-\item \code{weights}: The membership (weight) matrix associated with the best-performing
-configuration.
-\item \code{best_params}: A list containing the hyperparameters that achieved the best score.
-\item \code{best_cluster}: The index of the meta fuzzy function yielding the minimum validation error.
-\item \code{best_weight}: The weight vector corresponding to the best-performing meta fuzzy function.
-\item \code{best_scores}: The full set of evaluation scores for all meta fuzzy function predictions under
-the best configuration.
+  \item \code{algorithm}: The selected membership-generation method.
+  \item \code{eval.method}: The evaluation metric used in model selection.
+  \item \code{weights}: The membership (weight) matrix associated with the best-performing
+  configuration.
+  \item \code{best_params}: A list containing the hyperparameters that achieved the best score.
+  \item \code{best_cluster}: The index of the meta fuzzy function yielding the minimum validation error.
+  \item \code{best_weight}: The weight vector corresponding to the best-performing meta fuzzy function.
+  \item \code{best_scores}: The full set of evaluation scores for all meta fuzzy function predictions under
+  the best configuration.
 }
 }
 \description{
@@ -98,11 +98,21 @@ of the best-performing meta fuzzy function, and the full set of evaluation resul
 transparent reporting and reproducible model selection.
 }
 \examples{
-  res <- model.train(target="medv", data=MASS::Boston, ntest=50, nvalid=50, seed = 123)
-  fit <- tune.mff(res$pred_matrix_valid, res$y_valid, max_c=6, mff.method="kmeans")
-  out <- predict(fit, pred_matrix=res$pred_matrix_test, type="best")
-  head(out$mff_preds)
-  out$mff_weights
+set.seed(123)
+y_valid <- seq_len(30) + stats::rnorm(30, sd = 0.2)
+pred_valid <- cbind(
+  model_a = y_valid + stats::rnorm(30, sd = 0.3),
+  model_b = y_valid + stats::rnorm(30, sd = 0.4),
+  model_c = y_valid + stats::rnorm(30, sd = 1.2),
+  model_d = y_valid + stats::rnorm(30, sd = 1.4)
+)
+fit <- tune.mff(
+  pred_valid, y_valid,
+  max_c = 3, mff.method = "kmeans",
+  nstart = 10, parallel = FALSE, logging = FALSE
+)
+fit$best_params
+fit$best_cluster
 
 }
 \seealso{

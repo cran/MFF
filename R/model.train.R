@@ -76,10 +76,12 @@
 #' \code{\link{tune.mff}} for hyperparameter optimization,
 #'
 #' @examples
-#'  boston <- MASS::Boston
+#' # This example trains seven learners and is run interactively to keep
+#' # automated package checks fast and resource-efficient.
+#' if (interactive()) {
 #'   result <- model.train(
 #'     target = "medv",
-#'     data = boston,
+#'     data = MASS::Boston,
 #'     ntest = 50,
 #'     nvalid = 50,
 #'     seed = 123
@@ -87,6 +89,7 @@
 #'
 #'   head(result$pred_matrix_valid)
 #'   head(result$pred_matrix_test)
+#' }
 #'
 #' @importFrom glmnet cv.glmnet glmnet
 #' @importFrom randomForest randomForest
@@ -159,7 +162,13 @@ eta = 0.1
 max_depth = 6
 
 xgboost_dtrain <- xgb.DMatrix(X_train, label = y_train)
-xgboost_params <- list(objective = "reg:squarederror", eta = eta, max_depth = max_depth, eval_metric = "rmse")
+xgboost_params <- list(
+  objective = "reg:squarederror",
+  eta = eta,
+  max_depth = max_depth,
+  eval_metric = "rmse",
+  nthread = 1
+)
 
 xgboost_model <- xgb.train(xgboost_params, xgboost_dtrain, nrounds = nrounds, verbose = 0)
 xgboost_pred_valid <- predict(xgboost_model, xgb.DMatrix(X_valid))
@@ -170,7 +179,15 @@ learning_rate = 0.05
 num_leaves = 31
 
 lightgbm_dtrain <- lgb.Dataset(X_train, label = y_train)
-lightgbm_params <- list(objective = "regression", metric = "rmse", learning_rate = learning_rate, num_leaves = num_leaves, verbose = -1, force_row_wise = TRUE)
+lightgbm_params <- list(
+  objective = "regression",
+  metric = "rmse",
+  learning_rate = learning_rate,
+  num_leaves = num_leaves,
+  verbose = -1,
+  force_row_wise = TRUE,
+  num_threads = 1
+)
 lightgbm_model <- lgb.train(lightgbm_params, lightgbm_dtrain, nrounds = nrounds, verbose = -1)
 lightgbm_pred_valid <- predict(lightgbm_model, X_valid)
 lightgbm_pred_test <- predict(lightgbm_model, X_test)

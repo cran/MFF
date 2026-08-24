@@ -59,11 +59,22 @@
 #' @seealso \code{\link{mff}}, \code{\link{tune.mff}}, \code{\link{evaluate}}
 #'
 #' @examples
-#'   res <- model.train(target="medv", data=MASS::Boston, ntest=50, nvalid=50, seed = 123)
-#'   fit <- tune.mff(res$pred_matrix_valid, res$y_valid, max_c=6, mff.method="kmeans")
-#'   out <- predict(fit, pred_matrix=res$pred_matrix_test, type="best")
-#'   head(out$mff_preds)
-#'   out$mff_weights
+#' set.seed(123)
+#' y_valid <- seq_len(30) + stats::rnorm(30, sd = 0.2)
+#' pred_valid <- cbind(
+#'   model_a = y_valid + stats::rnorm(30, sd = 0.3),
+#'   model_b = y_valid + stats::rnorm(30, sd = 0.4),
+#'   model_c = y_valid + stats::rnorm(30, sd = 1.2),
+#'   model_d = y_valid + stats::rnorm(30, sd = 1.4)
+#' )
+#' fit <- tune.mff(
+#'   pred_valid, y_valid,
+#'   max_c = 3, mff.method = "kmeans",
+#'   nstart = 10, parallel = FALSE, logging = FALSE
+#' )
+#' out <- predict(fit, pred_matrix = pred_valid, type = "best")
+#' head(out$mff_preds)
+#' out$mff_weights
 #'
 #' @export
 predict.mff <- function(object, pred_matrix, type = c("best", "all"), ...) {

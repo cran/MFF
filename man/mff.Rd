@@ -45,9 +45,9 @@ are "fcm", "gk", "pfcm", and "kmeans".}
 \value{
 A list containing:
 \itemize{
-\item \code{method}: The clustering method used for membership estimation.
-\item \code{weights}: A column-standardized membership (weight) matrix.
-\item \code{cluster_scores}: A data frame of evaluation metrics computed for each cluster(function).
+  \item \code{method}: The clustering method used for membership estimation.
+  \item \code{weights}: A column-standardized membership (weight) matrix.
+  \item \code{cluster_scores}: A data frame of evaluation metrics computed for each cluster(function).
 }
 }
 \description{
@@ -73,17 +73,19 @@ contribution of base models within each meta fuzzy function sums to one, facilit
 interpretation and comparison across meta fuzzy functions.
 }
 \examples{
- result_train <- model.train(
-    target = "medv",
-    data = MASS::Boston,
-    ntest = 50,
-    nvalid = 50,
-    seed = 123
- )
-
- mff_model <- mff(result_train$pred_matrix_valid, result_train$y_valid, c = 4,
- iter.max=100,nstart = 100,method = "kmeans")
- mff_model
+set.seed(123)
+y_valid <- seq_len(30) + stats::rnorm(30, sd = 0.2)
+pred_valid <- cbind(
+  model_a = y_valid + stats::rnorm(30, sd = 0.3),
+  model_b = y_valid + stats::rnorm(30, sd = 0.4),
+  model_c = y_valid + stats::rnorm(30, sd = 1.2),
+  model_d = y_valid + stats::rnorm(30, sd = 1.4)
+)
+mff_model <- mff(
+  pred_valid, y_valid, c = 2,
+  nstart = 10, method = "kmeans"
+)
+mff_model
 
 }
 \references{

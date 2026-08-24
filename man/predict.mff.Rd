@@ -19,10 +19,10 @@ for all tuned configurations.}
 }
 \value{
 \itemize{
-\item \code{mff_preds}: A numeric matrix of meta fuzzy function predictions on the test set. When
-"best", this matrix reduces to a single column.
-\item \code{mff_weights}: The membership based weight matrix. If a single meta fuzzy function is
-selected, the corresponding weight vector is returned.
+  \item \code{mff_preds}: A numeric matrix of meta fuzzy function predictions on the test set. When
+  "best", this matrix reduces to a single column.
+ \item \code{mff_weights}: The membership based weight matrix. If a single meta fuzzy function is
+ selected, the corresponding weight vector is returned.
 }
 }
 \description{
@@ -45,10 +45,10 @@ the meta fuzzy functions.
 
 The predict function supports two prediction modes, controlled by the type argument:
 \itemize{
-\item type = "best" returns predictions obtained from the single meta fuzzy function that achieved
-the optimal validation performance during training or tuning (see Eq. 9).
-\item type = "all" returns predictions from all meta fuzzy functions, allowing users to examine
-alternative predictive components within the MFF model.
+  \item type = "best" returns predictions obtained from the single meta fuzzy function that achieved
+  the optimal validation performance during training or tuning (see Eq. 9).
+  \item type = "all" returns predictions from all meta fuzzy functions, allowing users to examine
+  alternative predictive components within the MFF model.
 }
 
 When type = "best" is selected, the final prediction for test observation \eqn{i} is given by
@@ -66,11 +66,22 @@ If a single best-performing cluster is defined via tune.mff, the corresponding w
 also returned.
 }
 \examples{
-  res <- model.train(target="medv", data=MASS::Boston, ntest=50, nvalid=50, seed = 123)
-  fit <- tune.mff(res$pred_matrix_valid, res$y_valid, max_c=6, mff.method="kmeans")
-  out <- predict(fit, pred_matrix=res$pred_matrix_test, type="best")
-  head(out$mff_preds)
-  out$mff_weights
+set.seed(123)
+y_valid <- seq_len(30) + stats::rnorm(30, sd = 0.2)
+pred_valid <- cbind(
+  model_a = y_valid + stats::rnorm(30, sd = 0.3),
+  model_b = y_valid + stats::rnorm(30, sd = 0.4),
+  model_c = y_valid + stats::rnorm(30, sd = 1.2),
+  model_d = y_valid + stats::rnorm(30, sd = 1.4)
+)
+fit <- tune.mff(
+  pred_valid, y_valid,
+  max_c = 3, mff.method = "kmeans",
+  nstart = 10, parallel = FALSE, logging = FALSE
+)
+out <- predict(fit, pred_matrix = pred_valid, type = "best")
+head(out$mff_preds)
+out$mff_weights
 
 }
 \seealso{

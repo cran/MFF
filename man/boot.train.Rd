@@ -37,12 +37,12 @@ Defaults to \code{parallel::detectCores() - 1}.}
 \value{
 A list containing the following components:
 \itemize{
-\item \code{pred_matrix_valid}: A matrix of dimensions \eqn{N_{valid} \times B} containing validation set predictions.
-\item \code{pred_matrix_test}: A matrix of dimensions \eqn{N_{test} \times B} containing test set predictions.
-\item \code{y_valid}: A numeric vector of actual target values for the validation set.
-\item \code{y_test}: A numeric vector of actual target values for the test set.
-\item \code{metadata}: A list containing the number of training samples (\code{ntrain}),
-the number of bootstrap iterations (\code{B}), and parallel processing status.
+  \item \code{pred_matrix_valid}: A matrix of dimensions \eqn{N_{valid} \times B} containing validation set predictions.
+  \item \code{pred_matrix_test}: A matrix of dimensions \eqn{N_{test} \times B} containing test set predictions.
+  \item \code{y_valid}: A numeric vector of actual target values for the validation set.
+  \item \code{y_test}: A numeric vector of actual target values for the test set.
+  \item \code{metadata}: A list containing the number of training samples (\code{ntrain}),
+  the number of bootstrap iterations (\code{B}), and parallel processing status.
 }
 }
 \description{

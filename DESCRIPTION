@@ -1,7 +1,7 @@
 Package: MFF
 Type: Package
 Title: Meta Fuzzy Functions
-Version: 0.2.0
+Version: 0.2.3
 Authors@R: c(
     person(
       "Nihat", "Tak",
@@ -20,11 +20,13 @@ Encoding: UTF-8
 RoxygenNote: 7.3.3
 Imports: glmnet, randomForest, xgboost, lightgbm, e1071, ppclust,
         doParallel, foreach, parallel
-Suggests: knitr, rmarkdown, MASS
+Suggests: knitr, rmarkdown, MASS, testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2026-03-31 06:44:36 UTC; sadik
+Packaged: 2026-08-24 06:39:56 UTC; nihattak
 Author: Nihat Tak [aut, cre],
   Sadık Çoban [aut]
 Maintainer: Nihat Tak <nihattak@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-04-01 19:50:14 UTC
+Date/Publication: 2026-08-24 08:50:29 UTC
