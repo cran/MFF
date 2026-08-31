@@ -79,15 +79,22 @@
 #' @export
 predict.mff <- function(object, pred_matrix, type = c("best", "all"), ...) {
 
+  if (!inherits(object, "mff") || is.null(object$weights) ||
+      !is.matrix(object$weights)) {
+    stop("'object' must be a valid fitted MFF object.", call. = FALSE)
+  }
+  .validate_new_prediction_matrix(pred_matrix, object$weights)
   type <- match.arg(type)
 
   if (type == "best") {
 
-    weights <- if (!is.null(object$best_weight)) {
-      object$best_weight
-    } else {
-      object$weights
+    if (is.null(object$best_weight)) {
+      stop(paste0(
+        "type = 'best' requires an MFF object tuned on validation data. ",
+        "Use tune.mff() or set type = 'all'."
+      ), call. = FALSE)
     }
+    weights <- object$best_weight
 
   } else {
     weights <- object$weights

@@ -41,6 +41,10 @@ tuned$best_params
 tuned$best_cluster
 tuned$best_scores
 
+## ----weight-heatmap, fig.height = 6-------------------------------------------
+print(tuned)
+plot(tuned, type = "weight_heatmap")
+
 ## ----predict------------------------------------------------------------------
 test_prediction <- predict(
   tuned,

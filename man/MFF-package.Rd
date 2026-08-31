@@ -29,7 +29,7 @@ space, with support for hyperparameter tuning and standard regression performanc
   \item{\code{predict.mff()}}{S3 prediction method for fitted or tuned MFF objects, generating test-set predictions using membership-weighted aggregation of base-model outputs.}
   \item{\code{print.mff()}}{Displays a concise description of a fitted or tuned MFF object.}
   \item{\code{summary.mff()}}{Summarizes the algorithm, dimensions, membership-derived weights, validation scores, and tuning selection.}
-  \item{\code{plot.mff()}}{Visualizes weights, validation scores, test scores, observed-versus-predicted values, or test-series predictions.}
+  \item{\code{plot.mff()}}{Visualizes weights as grouped bars or a labelled heatmap, validation scores, test scores, observed-versus-predicted values, or test-series predictions.}
   \item{\code{evaluate()}}{Computes regression performance metrics (e.g., MAE, RMSE, MAPE, SMAPE, MSE, MedAE) for comparing meta fuzzy functions and base-model predictions.}
   \item{\code{model.train()}}{Convenience function for training multiple regression models and producing validation and test prediction matrices suitable for MFF modeling.}
   \item{\code{boot.train()}}{Convenience function for training bagging for multiple linear regression models and producing validation and test prediction matrices suitable for MFF modeling.}

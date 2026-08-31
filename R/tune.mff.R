@@ -32,6 +32,8 @@
 #' parallel processing. If \code{NULL} (default), the function automatically detects
 #' and uses all available cores minus one (\code{parallel::detectCores() - 1}).
 #' @param logging A logical flag indicating whether progress information is printed during the search.
+#' @param clustering.reduction Character string passed to \code{mff()} selecting
+#' \code{"none"} or the distance-preserving \code{"pca"} representation.
 #'
 #' @details
 #' Given a matrix of base-model predictions and the corresponding validation targets, \emph{tune.mff}
@@ -60,6 +62,12 @@
 #'   \item \code{best_weight}: The weight vector corresponding to the best-performing meta fuzzy function.
 #'   \item \code{best_scores}: The full set of evaluation scores for all meta fuzzy function predictions under
 #'   the best configuration.
+#'   \item \code{search_diagnostics}: One row per requested configuration,
+#'   recording its seed, success status, selection metric, and any error
+#'   message. A failed configuration is skipped rather than aborting the full
+#'   search.
+#'   \item \code{n_successful}, \code{n_failed}: Numbers of successful and
+#'   failed grid configurations.
 #' }
 #'
 #' @seealso \code{\link{mff}}, \code{\link{model.train}}, \code{\link{predict.mff}}
@@ -90,7 +98,28 @@ tune.mff <- function(x, y, max_c, m_seq = seq(1.1, 3, by = 0.1),
                      nstart = 1, seed = 123,
                      mff.method = c("fcm", "pfcm", "kmeans", "gk"),
                      eval.method = c("MAE", "RMSE", "MAPE", "SMAPE", "MSE", "MedAE"),
-                     stand = FALSE, parallel = FALSE, num_cores = NULL, logging = TRUE) {
+                     stand = FALSE, parallel = FALSE, num_cores = NULL,
+                     logging = TRUE,
+                     clustering.reduction = c("none", "pca")) {
+
+  .validate_prediction_problem(x, y)
+  max_c <- .validate_scalar_integer(max_c, "max_c", lower = 2L)
+  nstart <- .validate_scalar_integer(nstart, "nstart")
+  if (!is.null(iter.max)) {
+    iter.max <- .validate_scalar_integer(iter.max, "iter.max")
+  }
+  if (length(seed) != 1L || !is.numeric(seed) || !is.finite(seed)) {
+    stop("'seed' must be a single finite number.", call. = FALSE)
+  }
+  if (length(stand) != 1L || !is.logical(stand) || is.na(stand)) {
+    stop("'stand' must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (length(parallel) != 1L || !is.logical(parallel) || is.na(parallel)) {
+    stop("'parallel' must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (length(logging) != 1L || !is.logical(logging) || is.na(logging)) {
+    stop("'logging' must be TRUE or FALSE.", call. = FALSE)
+  }
 
   if (max_c > ncol(x)) {
     stop(sprintf("Number of clusters (%d) cannot exceed models (%d).", max_c, ncol(x)))
@@ -98,6 +127,20 @@ tune.mff <- function(x, y, max_c, m_seq = seq(1.1, 3, by = 0.1),
 
   mff.method <- match.arg(mff.method)
   eval.method <- match.arg(eval.method)
+  clustering.reduction <- match.arg(clustering.reduction)
+
+  if (mff.method %in% c("fcm", "pfcm", "gk") &&
+      (!is.numeric(m_seq) || !length(m_seq) || any(!is.finite(m_seq)) ||
+       any(m_seq <= 1))) {
+    stop("'m_seq' must contain finite numeric values greater than 1.",
+         call. = FALSE)
+  }
+  if (mff.method == "pfcm" &&
+      (!is.numeric(eta_seq) || !length(eta_seq) || any(!is.finite(eta_seq)) ||
+       any(eta_seq <= 0))) {
+    stop("'eta_seq' must contain finite positive numeric values for PFCM.",
+         call. = FALSE)
+  }
 
   # --- 1. Grid Construction ---
   if (mff.method == "pfcm") {
@@ -120,7 +163,12 @@ tune.mff <- function(x, y, max_c, m_seq = seq(1.1, 3, by = 0.1),
     if (!requireNamespace("doParallel", quietly = TRUE)) stop("Package 'doParallel' is required for parallel processing.")
     if (!requireNamespace("foreach", quietly = TRUE)) stop("Package 'foreach' is required for parallel processing.")
 
-    if (is.null(num_cores)) num_cores <- parallel::detectCores() - 1
+    if (is.null(num_cores)) {
+      detected_cores <- parallel::detectCores()
+      num_cores <- if (is.na(detected_cores)) 1L else max(1L, detected_cores - 1L)
+    } else {
+      num_cores <- .validate_scalar_integer(num_cores, "num_cores")
+    }
     cl <- parallel::makeCluster(num_cores)
     doParallel::registerDoParallel(cl)
     on.exit(parallel::stopCluster(cl)) # Ensure cluster stops even if function fails
@@ -133,18 +181,33 @@ tune.mff <- function(x, y, max_c, m_seq = seq(1.1, 3, by = 0.1),
   run_iteration <- function(i) {
     set.seed(seed + i) # Ensure each worker has a unique but reproducible seed
     params <- as.list(search_grid[i, , drop = FALSE])
+    iteration_nstart <- if (is.null(params$nstart)) nstart else params$nstart
 
-    mff_result <- mff(
-      x = x, y = y, c = params$c,
-      m = params$m, eta = params$eta,
-      iter.max = iter.max, nstart = params$nstart,
-      method = mff.method,
-      stand = stand
-    )
-
-    # Return metric and result
-    metric <- min(mff_result$cluster_scores[, eval.method])
-    return(list(metric = metric, result = mff_result, params = params))
+    tryCatch({
+      mff_result <- mff(
+        x = x, y = y, c = params$c,
+        m = params$m, eta = params$eta,
+        iter.max = iter.max, nstart = iteration_nstart,
+        method = mff.method,
+        stand = stand,
+        clustering.reduction = clustering.reduction
+      )
+      scores <- mff_result$cluster_scores[, eval.method]
+      finite_scores <- scores[is.finite(scores)]
+      if (!length(finite_scores)) {
+        stop("configuration produced no finite validation score",
+             call. = FALSE)
+      }
+      list(
+        success = TRUE, metric = min(finite_scores), result = mff_result,
+        params = params, message = NA_character_
+      )
+    }, error = function(e) {
+      list(
+        success = FALSE, metric = Inf, result = NULL, params = params,
+        message = conditionMessage(e)
+      )
+    })
   }
 
   if (parallel) {
@@ -165,21 +228,56 @@ tune.mff <- function(x, y, max_c, m_seq = seq(1.1, 3, by = 0.1),
   }
 
   # --- 4. Best Model Selection ---
-  metrics <- sapply(all_results, function(res) res$metric)
+  metrics <- vapply(all_results, function(res) res$metric, numeric(1))
+  successful <- vapply(
+    all_results,
+    function(res) isTRUE(res$success) && is.finite(res$metric),
+    logical(1)
+  )
+  if (!any(successful)) {
+    messages <- unique(vapply(all_results, function(res) {
+      if (is.null(res$message) || is.na(res$message)) {
+        "unknown error"
+      } else {
+        res$message
+      }
+    }, character(1)))
+    stop(
+      sprintf(
+        "All %d '%s' grid configurations failed. First error: %s",
+        num_combinations, mff.method, messages[[1L]]
+      ),
+      call. = FALSE
+    )
+  }
   best_idx <- which.min(metrics)
   best_res <- all_results[[best_idx]]$result
 
   idx_in_cluster <- unname(which.min(best_res$cluster_scores[, eval.method]))
   best_weight <- best_res$weights[, idx_in_cluster]
 
+  search_diagnostics <- search_grid
+  search_diagnostics$iteration_seed <- seed + seq_len(num_combinations)
+  search_diagnostics$success <- successful
+  search_diagnostics$metric <- metrics
+  search_diagnostics$message <- vapply(
+    all_results,
+    function(res) if (isTRUE(res$success)) NA_character_ else res$message,
+    character(1)
+  )
+
   out <- list(
     algorithm = mff.method,
     eval.method = eval.method,
+    clustering_reduction = best_res$clustering_reduction,
     weights = best_res$weights,
     best_params = all_results[[best_idx]]$params,
     best_cluster = idx_in_cluster,
     best_weight = best_weight,
-    best_scores = best_res$cluster_scores
+    best_scores = best_res$cluster_scores,
+    search_diagnostics = search_diagnostics,
+    n_successful = sum(successful),
+    n_failed = sum(!successful)
   )
 
   out <- structure(out, class = "mff")

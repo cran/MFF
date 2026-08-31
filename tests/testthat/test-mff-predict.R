@@ -30,6 +30,29 @@ test_that("all membership-generation methods return normalized weights", {
   }
 })
 
+test_that("PCA clustering space preserves candidate-profile distances", {
+  dat <- make_prediction_data(n = 80L)
+  original <- t(dat$x)
+  reduced <- MFF:::.mff_clustering_space(
+    original, stand = FALSE, reduction = "pca"
+  )
+
+  expect_lte(ncol(reduced$data), nrow(original) - 1L)
+  expect_equal(
+    as.matrix(stats::dist(reduced$data)),
+    as.matrix(stats::dist(original)),
+    tolerance = 1e-8
+  )
+
+  fit <- mff(
+    dat$x, dat$y, c = 2, method = "gk", nstart = 2,
+    iter.max = 30, clustering.reduction = "pca"
+  )
+  expect_identical(fit$clustering_reduction$method, "pca")
+  expect_lte(fit$clustering_reduction$retained_dimensions,
+             ncol(dat$x) - 1L)
+})
+
 test_that("predict.mff applies all weights or the validation-selected weight", {
   dat <- make_prediction_data()
   fit <- mff(dat$x, dat$y, c = 2, method = "kmeans", nstart = 10)
@@ -47,6 +70,28 @@ test_that("mff rejects invalid prediction matrices", {
   with_na <- dat$x
   with_na[1, 1] <- NA_real_
 
-  expect_error(mff(with_na, dat$y, c = 2), "contains NA")
+  expect_error(mff(with_na, dat$y, c = 2), "finite values")
   expect_error(mff(dat$x, dat$y, c = ncol(dat$x) + 1), "cannot exceed")
+  expect_error(mff(as.data.frame(dat$x), dat$y, c = 2), "numeric matrix")
+  expect_error(mff(dat$x, dat$y[-1], c = 2), "must equal")
+  expect_error(mff(dat$x, dat$y, c = 0), "greater than or equal")
+  expect_error(mff(dat$x, dat$y, c = 2, method = "fcm", m = 1),
+               "greater than 1")
+  expect_error(mff(dat$x, dat$y, c = 2, method = "pfcm", eta = 0),
+               "positive")
+})
+
+test_that("predict.mff validates candidate identity and best-selection state", {
+  dat <- make_prediction_data()
+  fit <- mff(dat$x, dat$y, c = 2, method = "kmeans", nstart = 10)
+
+  expect_error(predict(fit, dat$x, type = "best"), "tuned on validation")
+  expect_error(predict(fit, dat$x[, -1, drop = FALSE], type = "all"),
+               "number of columns")
+
+  reordered <- dat$x[, rev(seq_len(ncol(dat$x))), drop = FALSE]
+  expect_error(predict(fit, reordered, type = "all"), "same order")
+
+  unnamed <- unname(dat$x)
+  expect_error(predict(fit, unnamed, type = "all"), "must have")
 })

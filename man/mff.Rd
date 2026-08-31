@@ -13,7 +13,8 @@ mff(
   iter.max = NULL,
   nstart = 1,
   stand = FALSE,
-  method = c("fcm", "pfcm", "kmeans", "gk")
+  method = c("fcm", "pfcm", "kmeans", "gk"),
+  clustering.reduction = c("none", "pca")
 )
 }
 \arguments{
@@ -41,6 +42,12 @@ algorithm.}
 
 \item{method}{A character string selecting the membership-generation method. Available options
 are "fcm", "gk", "pfcm", and "kmeans".}
+
+\item{clustering.reduction}{Character string selecting the representation used
+for clustering candidate prediction profiles. \code{"none"} uses the original
+validation-observation dimensions. \code{"pca"} uses all nonzero principal
+components and therefore preserves pairwise Euclidean distances while reducing
+the dimension to at most the number of candidate models minus one.}
 }
 \value{
 A list containing:

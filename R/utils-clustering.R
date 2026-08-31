@@ -63,3 +63,52 @@
 
   return(weight_matrix)
 }
+
+.mff_clustering_space <- function(x_transposed, stand, reduction) {
+  processed <- x_transposed
+  if (isTRUE(stand)) {
+    centers <- colMeans(processed)
+    scales <- apply(processed, 2L, stats::sd)
+    scales[!is.finite(scales) | scales <= 0] <- 1
+    processed <- sweep(processed, 2L, centers, FUN = "-")
+    processed <- sweep(processed, 2L, scales, FUN = "/")
+  }
+
+  if (reduction == "none") {
+    return(list(
+      data = processed,
+      metadata = list(
+        method = "none",
+        original_dimensions = ncol(processed),
+        retained_dimensions = ncol(processed),
+        distance_preserving = TRUE
+      )
+    ))
+  }
+
+  centered <- sweep(processed, 2L, colMeans(processed), FUN = "-")
+  decomposition <- base::svd(centered, nu = min(dim(centered)), nv = 0L)
+  if (!length(decomposition$d) || decomposition$d[[1L]] <= 0) {
+    stop("PCA reduction failed because all candidate profiles are identical.",
+         call. = FALSE)
+  }
+  tolerance <- max(dim(centered)) * decomposition$d[[1L]] *
+    .Machine$double.eps
+  rank <- sum(decomposition$d > tolerance)
+  scores <- sweep(
+    decomposition$u[, seq_len(rank), drop = FALSE],
+    2L, decomposition$d[seq_len(rank)], FUN = "*"
+  )
+  rownames(scores) <- rownames(x_transposed)
+
+  list(
+    data = scores,
+    metadata = list(
+      method = "pca",
+      original_dimensions = ncol(processed),
+      retained_dimensions = rank,
+      distance_preserving = TRUE,
+      tolerance = tolerance
+    )
+  )
+}

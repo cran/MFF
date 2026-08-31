@@ -38,8 +38,21 @@ test_that("plot.mff draws weights and scores", {
   on.exit(grDevices::dev.off(), add = TRUE)
 
   expect_identical(plot(fit, type = "weights"), fit)
+  expect_identical(plot(fit, type = "weight_heatmap"), fit)
+  expect_identical(
+    plot(fit, type = "weight_heatmap", heatmap_values = FALSE),
+    fit
+  )
   expect_identical(plot(fit, type = "scores", metric = "MAE"), fit)
   expect_error(plot(fit, type = "scores", metric = "unknown"), "Unknown metric")
+  expect_error(
+    plot(fit, type = "weight_heatmap", heatmap_values = NA),
+    "must be TRUE or FALSE"
+  )
+  expect_error(
+    plot(fit, type = "weight_heatmap", heatmap_digits = -1),
+    "non-negative integer"
+  )
 })
 
 test_that("plot.mff creates validation-selected test plots", {

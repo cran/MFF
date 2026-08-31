@@ -6,12 +6,14 @@
 \usage{
 \method{plot}{mff}(
   x,
-  type = c("weights", "validation_scores", "scores", "test_scores", "observed_predicted",
-    "series"),
+  type = c("weights", "weight_heatmap", "validation_scores", "scores", "test_scores",
+    "observed_predicted", "series"),
   metric = NULL,
   pred_matrix = NULL,
   actual = NULL,
   show_all = FALSE,
+  heatmap_values = TRUE,
+  heatmap_digits = 3L,
   ...
 )
 }
@@ -19,9 +21,10 @@
 \item{x}{An object of class \code{mff}.}
 
 \item{type}{Character string selecting \code{"weights"},
-\code{"validation_scores"}, \code{"scores"}, \code{"test_scores"},
-\code{"observed_predicted"}, or \code{"series"}. The value
-\code{"scores"} is retained as an alias for \code{"validation_scores"}.}
+\code{"weight_heatmap"}, \code{"validation_scores"}, \code{"scores"},
+\code{"test_scores"}, \code{"observed_predicted"}, or \code{"series"}.
+The value \code{"scores"} is retained as an alias for
+\code{"validation_scores"}.}
 
 \item{metric}{Optional score column for validation or test score plots.
 Defaults to the tuning metric for tuned objects and \code{"RMSE"} otherwise.}
@@ -36,6 +39,12 @@ for test-based plots.}
 selected on validation data. If \code{TRUE}, all functions are displayed
 descriptively; no new function is selected from test performance.}
 
+\item{heatmap_values}{Logical. If \code{TRUE}, print the normalized weight
+in every cell of a \code{"weight_heatmap"} plot.}
+
+\item{heatmap_digits}{Non-negative integer giving the number of decimal
+places used for heatmap cell labels.}
+
 \item{...}{Additional graphical arguments passed to the underlying base R
 plotting function.}
 }
@@ -43,9 +52,9 @@ plotting function.}
 The input object \code{x}, invisibly.
 }
 \description{
-Visualize membership-derived candidate-model weights, validation scores,
-test scores, observed-versus-predicted test values, or observed and predicted
-values in test-observation order.
+Visualize membership-derived candidate-model weights as grouped bars or a
+labelled heatmap, validation scores, test scores, observed-versus-predicted
+test values, or observed and predicted values in test-observation order.
 }
 \details{
 Test-based plots transfer weights learned from validation data unchanged to
@@ -64,6 +73,7 @@ predictions <- cbind(
 )
 fit <- mff(predictions, y, c = 2, method = "kmeans", nstart = 10)
 plot(fit, type = "weights")
+plot(fit, type = "weight_heatmap")
 plot(fit, type = "validation_scores", metric = "RMSE")
 
 # Select a function using validation data, then visualize test performance.

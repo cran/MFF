@@ -37,6 +37,23 @@
 #' @export
 evaluate <- function(predicted, actual) {
 
+  if (!is.numeric(predicted) || (!is.null(dim(predicted)) && !is.matrix(predicted))) {
+    stop("'predicted' must be a numeric vector or matrix.", call. = FALSE)
+  }
+  if (!is.numeric(actual) || !is.null(dim(actual))) {
+    stop("'actual' must be a numeric vector.", call. = FALSE)
+  }
+  prediction_length <- if (is.matrix(predicted)) nrow(predicted) else length(predicted)
+  if (prediction_length != length(actual)) {
+    stop("The number of predictions must equal length(actual).", call. = FALSE)
+  }
+  if (!length(actual)) {
+    stop("'actual' and 'predicted' must not be empty.", call. = FALSE)
+  }
+  if (any(!is.finite(predicted)) || any(!is.finite(actual))) {
+    stop("'predicted' and 'actual' must contain only finite values.", call. = FALSE)
+  }
+
   compute_metrics <- function(p, y) {
     errors <- p - y
 

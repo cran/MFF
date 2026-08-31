@@ -18,7 +18,8 @@ tune.mff(
   stand = FALSE,
   parallel = FALSE,
   num_cores = NULL,
-  logging = TRUE
+  logging = TRUE,
+  clustering.reduction = c("none", "pca")
 )
 }
 \arguments{
@@ -62,6 +63,9 @@ parallel processing. If \code{NULL} (default), the function automatically detect
 and uses all available cores minus one (\code{parallel::detectCores() - 1}).}
 
 \item{logging}{A logical flag indicating whether progress information is printed during the search.}
+
+\item{clustering.reduction}{Character string passed to \code{mff()} selecting
+\code{"none"} or the distance-preserving \code{"pca"} representation.}
 }
 \value{
 \itemize{
@@ -74,6 +78,12 @@ and uses all available cores minus one (\code{parallel::detectCores() - 1}).}
   \item \code{best_weight}: The weight vector corresponding to the best-performing meta fuzzy function.
   \item \code{best_scores}: The full set of evaluation scores for all meta fuzzy function predictions under
   the best configuration.
+  \item \code{search_diagnostics}: One row per requested configuration,
+  recording its seed, success status, selection metric, and any error
+  message. A failed configuration is skipped rather than aborting the full
+  search.
+  \item \code{n_successful}, \code{n_failed}: Numbers of successful and
+  failed grid configurations.
 }
 }
 \description{

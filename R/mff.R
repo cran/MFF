@@ -20,6 +20,11 @@
 #' (mean=0, sd=1) before clustering to ensure scale-invariance between models.
 #' @param method A character string selecting the membership-generation method. Available options
 #' are "fcm", "gk", "pfcm", and "kmeans".
+#' @param clustering.reduction Character string selecting the representation used
+#' for clustering candidate prediction profiles. \code{"none"} uses the original
+#' validation-observation dimensions. \code{"pca"} uses all nonzero principal
+#' components and therefore preserves pairwise Euclidean distances while reducing
+#' the dimension to at most the number of candidate models minus one.
 #'
 #' @details
 #' The \emph{mff} function is the core constructor of the Meta Fuzzy Function (MFF) framework. It
@@ -95,9 +100,16 @@
 #' mff_model
 #'
 #' @export
-mff <- function(x, y, c, m=2, eta=2,iter.max=NULL,nstart = 1, stand = FALSE,method = c("fcm", "pfcm", "kmeans","gk")) {
+mff <- function(x, y, c, m=2, eta=2,iter.max=NULL,nstart = 1, stand = FALSE,
+                method = c("fcm", "pfcm", "kmeans","gk"),
+                clustering.reduction = c("none", "pca")) {
 
-  if (any(is.na(x))) stop("Input matrix 'x' contains NA values. Please impute or remove them.")
+  .validate_prediction_problem(x, y)
+  c <- .validate_scalar_integer(c, "c")
+  nstart <- .validate_scalar_integer(nstart, "nstart")
+  if (length(stand) != 1L || !is.logical(stand) || is.na(stand)) {
+    stop("'stand' must be TRUE or FALSE.", call. = FALSE)
+  }
 
   col_vars <- apply(x, 2, var)
   if (any(col_vars == 0)) {
@@ -112,6 +124,17 @@ mff <- function(x, y, c, m=2, eta=2,iter.max=NULL,nstart = 1, stand = FALSE,meth
   }
 
   method <- match.arg(method)
+  clustering.reduction <- match.arg(clustering.reduction)
+
+  if (method %in% c("fcm", "pfcm", "gk") &&
+      (length(m) != 1L || !is.numeric(m) || !is.finite(m) || m <= 1)) {
+    stop("'m' must be a finite number greater than 1 for fuzzy methods.",
+         call. = FALSE)
+  }
+  if (method == "pfcm" &&
+      (length(eta) != 1L || !is.numeric(eta) || !is.finite(eta) || eta <= 0)) {
+    stop("'eta' must be a finite positive number for PFCM.", call. = FALSE)
+  }
 
   if (is.null(iter.max)) {
     iter.max <- switch(method,
@@ -119,19 +142,20 @@ mff <- function(x, y, c, m=2, eta=2,iter.max=NULL,nstart = 1, stand = FALSE,meth
                        "fcm"    = 100,
                        "pfcm"   = 1000,
                        "gk"     = 1000)
+  } else {
+    iter.max <- .validate_scalar_integer(iter.max, "iter.max")
   }
 
   x_transposed <- t(x)
-  if (stand) {
-    x_processed <- scale(x_transposed)
-  } else {
-    x_processed <- x_transposed
-  }
+  clustering_space <- .mff_clustering_space(
+    x_transposed, stand = stand, reduction = clustering.reduction
+  )
+  x_processed <- clustering_space$data
   if (method == "fcm") {
     result <- e1071::cmeans(x_processed, centers = c, m = m,iter.max=iter.max)
     membership <- result$membership
   } else if (method == "pfcm") {
-    result <- ppclust::pfcm(x_transposed, centers = c, m = m, nstart = nstart, eta = eta,stand = stand,iter.max=iter.max)
+    result <- ppclust::pfcm(x_processed, centers = c, m = m, nstart = nstart, eta = eta,stand = FALSE,iter.max=iter.max)
     membership <- result$u
   }else if (method == "gk") {
 
@@ -139,7 +163,7 @@ mff <- function(x, y, c, m=2, eta=2,iter.max=NULL,nstart = 1, stand = FALSE,meth
 
     result <- tryCatch({
       withCallingHandlers({
-        ppclust::gk(x_transposed, centers = c, m = m, nstart = nstart, stand = stand, iter.max = iter.max)
+        ppclust::gk(x_processed, centers = c, m = m, nstart = nstart, stand = FALSE, iter.max = iter.max)
       }, warning = function(w) {
         if (!first_warning_caught) {
 
@@ -178,6 +202,7 @@ mff <- function(x, y, c, m=2, eta=2,iter.max=NULL,nstart = 1, stand = FALSE,meth
 
   out <- list(
     method = method,
+    clustering_reduction = clustering_space$metadata,
     weights = weight_matrix,
     cluster_scores = cluster_scores
   )

@@ -1,3 +1,20 @@
+# MFF 0.2.4
+
+* Added `plot.mff(type = "weight_heatmap")` for a labelled heatmap of the
+  complete candidate-model by meta-function weight matrix.
+* Added an optional distance-preserving PCA representation for clustering
+  candidate prediction profiles. This reduces the clustering space to at most
+  the number of candidate models minus one and makes GK clustering practical
+  when the validation set is much larger than the candidate set.
+* Strengthened validation of prediction matrices, response vectors, clustering
+  parameters, tuning grids, and parallel execution arguments.
+* `predict.mff()` now verifies candidate-model identities and column order before
+  applying fitted weights.
+* `predict.mff(type = "best")` now reports an informative error when no
+  validation-selected weight is available, instead of implicitly returning all
+  meta fuzzy functions.
+* `evaluate()` now rejects mismatched, empty, malformed, and non-finite inputs.
+
 # MFF 0.2.3
 
 * Added an end-to-end vignette demonstrating the

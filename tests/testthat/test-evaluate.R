@@ -21,3 +21,10 @@ test_that("evaluate treats matrix columns as separate prediction vectors", {
   expect_equal(result["perfect", "MAE"], 0)
   expect_equal(result["shifted", "MAE"], 1)
 })
+
+test_that("evaluate rejects malformed or non-finite inputs", {
+  expect_error(evaluate(c(1, 2), c(1)), "must equal")
+  expect_error(evaluate(c(1, Inf), c(1, 2)), "finite")
+  expect_error(evaluate(character(), numeric()), "numeric")
+  expect_error(evaluate(numeric(), numeric()), "must not be empty")
+})

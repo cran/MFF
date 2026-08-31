@@ -115,15 +115,16 @@ print.summary.mff <- function(x, ...) {
 #' Plot an MFF Object
 #'
 #' @description
-#' Visualize membership-derived candidate-model weights, validation scores,
-#' test scores, observed-versus-predicted test values, or observed and predicted
-#' values in test-observation order.
+#' Visualize membership-derived candidate-model weights as grouped bars or a
+#' labelled heatmap, validation scores, test scores, observed-versus-predicted
+#' test values, or observed and predicted values in test-observation order.
 #'
 #' @param x An object of class \code{mff}.
 #' @param type Character string selecting \code{"weights"},
-#' \code{"validation_scores"}, \code{"scores"}, \code{"test_scores"},
-#' \code{"observed_predicted"}, or \code{"series"}. The value
-#' \code{"scores"} is retained as an alias for \code{"validation_scores"}.
+#' \code{"weight_heatmap"}, \code{"validation_scores"}, \code{"scores"},
+#' \code{"test_scores"}, \code{"observed_predicted"}, or \code{"series"}.
+#' The value \code{"scores"} is retained as an alias for
+#' \code{"validation_scores"}.
 #' @param metric Optional score column for validation or test score plots.
 #' Defaults to the tuning metric for tuned objects and \code{"RMSE"} otherwise.
 #' @param pred_matrix Optional numeric test prediction matrix with observations
@@ -133,6 +134,10 @@ print.summary.mff <- function(x, ...) {
 #' @param show_all Logical. If \code{FALSE}, test plots use only the function
 #' selected on validation data. If \code{TRUE}, all functions are displayed
 #' descriptively; no new function is selected from test performance.
+#' @param heatmap_values Logical. If \code{TRUE}, print the normalized weight
+#' in every cell of a \code{"weight_heatmap"} plot.
+#' @param heatmap_digits Non-negative integer giving the number of decimal
+#' places used for heatmap cell labels.
 #' @param ... Additional graphical arguments passed to the underlying base R
 #' plotting function.
 #'
@@ -155,6 +160,7 @@ print.summary.mff <- function(x, ...) {
 #' )
 #' fit <- mff(predictions, y, c = 2, method = "kmeans", nstart = 10)
 #' plot(fit, type = "weights")
+#' plot(fit, type = "weight_heatmap")
 #' plot(fit, type = "validation_scores", metric = "RMSE")
 #'
 #' # Select a function using validation data, then visualize test performance.
@@ -179,12 +185,14 @@ print.summary.mff <- function(x, ...) {
 #' @export
 plot.mff <- function(
     x,
-    type = c("weights", "validation_scores", "scores", "test_scores",
-             "observed_predicted", "series"),
+    type = c("weights", "weight_heatmap", "validation_scores", "scores",
+             "test_scores", "observed_predicted", "series"),
     metric = NULL,
     pred_matrix = NULL,
     actual = NULL,
     show_all = FALSE,
+    heatmap_values = TRUE,
+    heatmap_digits = 3L,
     ...) {
   type <- match.arg(type)
   if (type == "scores") type <- "validation_scores"
@@ -247,6 +255,74 @@ plot.mff <- function(
       xlab = "Candidate model",
       ...
     )
+  } else if (type == "weight_heatmap") {
+    weights <- x$weights
+    model_names <- rownames(weights)
+    if (is.null(model_names)) model_names <- paste0("Model ", seq_len(nrow(weights)))
+    function_names <- colnames(weights)
+    if (is.null(function_names)) {
+      function_names <- paste0("Function ", seq_len(ncol(weights)))
+    } else {
+      function_names <- paste0("Function ", function_names)
+    }
+
+    if (length(heatmap_values) != 1L || !is.logical(heatmap_values) ||
+        is.na(heatmap_values)) {
+      stop("'heatmap_values' must be TRUE or FALSE.", call. = FALSE)
+    }
+    if (length(heatmap_digits) != 1L || !is.numeric(heatmap_digits) ||
+        !is.finite(heatmap_digits) || heatmap_digits < 0 ||
+        heatmap_digits != as.integer(heatmap_digits)) {
+      stop("'heatmap_digits' must be a non-negative integer.", call. = FALSE)
+    }
+    heatmap_digits <- as.integer(heatmap_digits)
+
+    display_weights <- weights[nrow(weights):1, , drop = FALSE]
+    z <- t(display_weights)
+    dots <- list(...)
+    dots[c("x", "y", "z", "axes")] <- NULL
+    if (is.null(dots$col)) {
+      dots$col <- grDevices::colorRampPalette(
+        c("white", "#9ecae1", "#08519c")
+      )(100)
+    }
+    if (is.null(dots$zlim)) dots$zlim <- c(0, max(weights))
+    if (is.null(dots$xlab)) dots$xlab <- "Meta fuzzy function"
+    if (is.null(dots$ylab)) dots$ylab <- "Candidate model"
+
+    do.call(
+      graphics::image,
+      c(
+        list(
+          x = seq_len(ncol(weights)),
+          y = seq_len(nrow(weights)),
+          z = z,
+          axes = FALSE
+        ),
+        dots
+      )
+    )
+    graphics::axis(1, at = seq_len(ncol(weights)), labels = function_names)
+    graphics::axis(
+      2, at = seq_len(nrow(weights)),
+      labels = rev(model_names), las = 1
+    )
+    graphics::box()
+
+    if (heatmap_values) {
+      coordinates <- expand.grid(
+        x = seq_len(ncol(weights)),
+        y = seq_len(nrow(weights))
+      )
+      values <- as.vector(z)
+      labels <- format(round(values, heatmap_digits),
+                       nsmall = heatmap_digits)
+      text_colours <- ifelse(values > 0.45 * max(weights), "white", "black")
+      graphics::text(
+        coordinates$x, coordinates$y,
+        labels = labels, col = text_colours, cex = 0.8
+      )
+    }
   } else if (type == "validation_scores") {
     scores <- if (!is.null(x$best_scores)) x$best_scores else x$cluster_scores
     if (is.null(metric)) {
